@@ -12,17 +12,17 @@ class TextToSpeechView(APIView):
         serializer = TextToSpeechSerializer(data=data)
 
         if serializer.is_valid():
-            with open('input.txt', 'w') as file:
-                file.write(data["text"])
-                convert_instance = Convert()
-                output = convert_instance.convert(data["text"])
+            # with open('input.txt', 'w') as file:
+            #     file.write(data["text"])
+            convert_instance = Convert()
+            output = convert_instance.convert(data["text"])
 
-                # Convert AudioSegment to bytes
-                mp3_bytes = output.export(format='mp3').read()
+            # Convert AudioSegment to bytes
+            mp3_bytes = output.export(format='mp3').read()
 
-                response = HttpResponse(mp3_bytes, content_type='audio/mpeg')
-                response['Content-Disposition'] = 'attachment; filename="output.mp3"'
-                return response
+            response = HttpResponse(mp3_bytes, content_type='audio/mpeg')
+            response['Content-Disposition'] = 'attachment; filename="output.mp3"'
+            return response
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -10,17 +10,15 @@ class Convert:
 
     def __init__(self):
         # Get the absolute path to the directory where this script is located
-        dir_path = os.path.dirname(os.path.realpath(__file__))
+        self.dir_path = os.path.dirname(os.path.realpath(__file__))
 
         # Use os.path.join to combine the path to this directory with the filename
-        json_path = os.path.join(dir_path, 'credentials.json')
+        json_path = os.path.join(self.dir_path, 'credentials.json')
 
         # Set the path to your service account key JSON file
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_path
         # Instantiates a client
         self.client = texttospeech.TextToSpeechClient()
-        self.file_path = "input.txt"
-        self.output_file_path = "output.mp3"
 
     def split_file(self, text):
         chunk_size = 4 * 1024  # 4.5 KB
@@ -31,12 +29,8 @@ class Convert:
             chunks = []
             index = 0
             while text:
-                chunk = text[:chunk_size]
                 text = text[chunk_size:]
-                chunk_path = f"inputs/{self.file_path}.part{index}"
-                with open(chunk_path, 'w') as chunk_file:
-                    chunk_file.write(chunk)
-                chunks.append(chunk_path)
+                chunks.append(text)
                 index += 1
             return chunks
         except OSError:
@@ -69,14 +63,14 @@ class Convert:
         # Define a unique file name using either timestamp or uuid
         # unique_filename = "output_" + str(int(time.time())) + ".mp3"  # Using timestamp
         # # or
-        unique_filename = "output_" + str(uuid.uuid4()) + ".mp3"  # Using uuid
+        filename = os.path.join(self.dir_path, "output.mp3")  # Using uuid
 
         # Check if the file exists, if not create a new one
-        if not os.path.exists(unique_filename):
-            with open(unique_filename, 'wb') as out:
+        if not os.path.exists(filename):
+            with open(filename, 'wb') as out:
                 out.write(response.audio_content)
 
-        return unique_filename
+        return filename
 
     def convert(self, text):
         # Split the text into chunks
