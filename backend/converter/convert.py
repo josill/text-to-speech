@@ -1,7 +1,5 @@
 import os
 from google.cloud import texttospeech
-import time
-import uuid
 from pydub import AudioSegment
 
 class Convert:
@@ -37,14 +35,30 @@ class Convert:
             print(f"Error: Could not split the text")
             return None
 
-    def convert_to_speech(self, text):
+    def convert_to_speech(self, text, voice):
         # Set the text input to be synthesized
         synthesis_input = texttospeech.SynthesisInput(text=text)
+        voice_gender = voice.split(" ")[0]
+        voice_country = voice.split(" ")[1]
 
-        # Build the voice request, select the language code ("en-US") and the ssml
-        # voice gender ("female")
+        # Conditionally set the ssml_gender based on a variable (e.g., gender)
+        if voice_gender == 'Male':
+            if voice_country == 'GB':
+                name = f'en-{voice_country}-Neural2-D'
+                ssml_gender = texttospeech.SsmlVoiceGender.MALE
+            else:
+                name = f'en-{voice_country}-Neural2-J'
+                ssml_gender = texttospeech.SsmlVoiceGender.MALE
+        elif voice_gender == 'Female':
+            if voice_country == 'GB':
+                name = f'en-{voice_country}-Neural2-A'
+                ssml_gender = texttospeech.SsmlVoiceGender.FEMALE
+            else:
+                name = f'en-{voice_country}-Neural2-F'
+                ssml_gender = texttospeech.SsmlVoiceGender.FEMALE
+
         voice = texttospeech.VoiceSelectionParams(
-            language_code='en-US', name='en-US-Neural2-J', ssml_gender=texttospeech.SsmlVoiceGender.MALE
+            language_code=f'en-{voice_country}', name=name, ssml_gender=ssml_gender
         )
 
         # Select the type of audio file you want returned
@@ -52,27 +66,19 @@ class Convert:
             audio_encoding=texttospeech.AudioEncoding.MP3
         )
 
-        # Perform the text-to-speech request on the text input with the selected
-        # voice parameters and audio file type
+        # Perform the text-to-speech request on the text input with the selected voice parameters and audio file type
         response = self.client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
 
-        # The response's audio_content is binary.
-        
-        # Define a unique file name using either timestamp or uuid
-        # unique_filename = "output_" + str(int(time.time())) + ".mp3"  # Using timestamp
-        # # or
         filename = os.path.join(self.dir_path, "output.mp3")  # Using uuid
 
-        # Check if the file exists, if not create a new one
-        if not os.path.exists(filename):
-            with open(filename, 'wb') as out:
-                out.write(response.audio_content)
+        with open(filename, 'wb') as out:
+            out.write(response.audio_content)
 
         return filename
 
-    def convert(self, text):
+    def convert(self, text, voice):
         # Split the text into chunks
         chunks = self.split_file(text)
 
@@ -80,10 +86,7 @@ class Convert:
         final_audio = AudioSegment.empty()
 
         for text_chunk in chunks:
-            # with open(chunk, "r") as file:
-            #     file_contents = file.read()
-                # Get the filename of the audio chunk
-            audio_chunk_filename = self.convert_to_speech(text_chunk)
+            audio_chunk_filename = self.convert_to_speech(text_chunk, voice)
                 
             # Load the audio chunk and append it to final_audio
             audio_chunk = AudioSegment.from_mp3(audio_chunk_filename)

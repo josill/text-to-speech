@@ -7,15 +7,14 @@ from django.http import HttpResponse
 from converter.convert import Convert
 
 class TextToSpeechView(APIView):
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         data = request.data
+        voice = request.query_params.get('voice')
         serializer = TextToSpeechSerializer(data=data)
 
         if serializer.is_valid():
-            # with open('input.txt', 'w') as file:
-            #     file.write(data["text"])
             convert_instance = Convert()
-            output = convert_instance.convert(data["text"])
+            output = convert_instance.convert(data["text"], voice)
 
             # Convert AudioSegment to bytes
             mp3_bytes = output.export(format='mp3').read()
